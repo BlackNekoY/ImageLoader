@@ -1,4 +1,4 @@
-package com.rdc.imageloader.net;
+package com.rdc.imageloader.blackwhite.cache;
 
 import android.content.Context;
 import android.content.pm.PackageInfo;
@@ -7,8 +7,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Environment;
 
-import com.rdc.imageloader.net.base.DiskLruCache;
-import com.rdc.imageloader.net.base.ImageCache;
+import com.rdc.imageloader.blackwhite.cache.base.ImageCache;
 
 import java.io.File;
 import java.io.IOException;

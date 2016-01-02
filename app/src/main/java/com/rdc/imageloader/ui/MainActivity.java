@@ -1,20 +1,13 @@
 package com.rdc.imageloader.ui;
 
-import android.graphics.Bitmap;
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
-import android.view.View;
-import android.view.Menu;
-import android.view.MenuItem;
-import android.widget.AbsListView;
 import android.widget.GridView;
 import android.widget.ImageView;
 
+import com.android.volley.Network;
+import com.android.volley.toolbox.ImageLoader;
 import com.rdc.imageloader.R;
-import com.rdc.imageloader.net.ImageLoader;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -81,6 +74,7 @@ public class MainActivity extends AppCompatActivity {
         adapter = new ImageAdapter(this,mUrlList);
         adapter.setGridViewScrollState(true);
         mGridView.setAdapter(adapter);
+
 
       /*  mGridView.setOnScrollListener(new AbsListView.OnScrollListener() {
             @Override

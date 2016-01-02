@@ -9,7 +9,7 @@ import android.widget.BaseAdapter;
 import android.widget.ImageView;
 
 import com.rdc.imageloader.R;
-import com.rdc.imageloader.net.ImageLoader;
+import com.rdc.imageloader.blackwhite.ImageLoader;
 
 import java.util.List;
 

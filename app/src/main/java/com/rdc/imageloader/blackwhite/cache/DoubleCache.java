@@ -1,9 +1,9 @@
-package com.rdc.imageloader.net;
+package com.rdc.imageloader.blackwhite.cache;
 
 import android.content.Context;
 import android.graphics.Bitmap;
 
-import com.rdc.imageloader.net.base.ImageCache;
+import com.rdc.imageloader.blackwhite.cache.base.ImageCache;
 
 /**
  * Created by blackwhite on 15-12-31.

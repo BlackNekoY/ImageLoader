@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.rdc.imageloader.net.base;
+package com.rdc.imageloader.blackwhite.cache;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedWriter;

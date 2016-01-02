@@ -1,4 +1,4 @@
-package com.rdc.imageloader.net;
+package com.rdc.imageloader.blackwhite;
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -6,17 +6,20 @@ import android.graphics.BitmapFactory;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
+import android.util.Log;
+import android.widget.ImageView;
 
-import com.rdc.imageloader.net.base.ImageCache;
+import com.rdc.imageloader.blackwhite.cache.base.ImageCache;
+import com.rdc.imageloader.blackwhite.cache.DoubleCache;
+import com.rdc.imageloader.blackwhite.network.BasicNetwork;
+import com.rdc.imageloader.blackwhite.network.Network;
+import com.rdc.imageloader.blackwhite.request.Request;
+import com.rdc.imageloader.blackwhite.response.HttpResponse;
 import com.rdc.imageloader.util.ImageResizer;
 import com.rdc.imageloader.util.MD5Util;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.ThreadFactory;
@@ -29,6 +32,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class ImageLoader {
 
+    private static final String TAG = "ImageLoader";
     //CPU数目
     private static final int CPU_COUNT = Runtime.getRuntime().availableProcessors();
     //核心线程数目
@@ -37,25 +41,27 @@ public class ImageLoader {
     private static final int MAXIMUM_POOL_SIZE = CPU_COUNT * 2 + 1;
     //保活
     private static final int KEEP_ALIVE = 1;
-    private static final String TAG = "ImageLoader";
 
     private ImageCache mCache;
     private ThreadFactory mThreadFactory;
     private Executor mThreadPool;
     private ImageHandler mHandler;
+    private Network mNetwork;
 
     private ImageResizer mImageResizer;
 
 
-    public ImageLoader(Context context, ImageCache cache) {
+    public ImageLoader(Context context, ImageCache cache, Network network) {
         initImageLoader();
         mCache = cache;
+        mNetwork = network;
         mHandler = new ImageHandler(Looper.getMainLooper());
         mImageResizer = new ImageResizer(context);
     }
 
+
     public ImageLoader(Context context) {
-        this(context, new DoubleCache(context));
+        this(context, new DoubleCache(context), new BasicNetwork());
     }
 
     public interface ImageListener {
@@ -75,8 +81,8 @@ public class ImageLoader {
         mThreadPool = new ThreadPoolExecutor(CORE_POOL_SIZE, MAXIMUM_POOL_SIZE, KEEP_ALIVE,
                 TimeUnit.SECONDS, new LinkedBlockingDeque<Runnable>(), mThreadFactory);
     }
-/*
-    public void bindImageView(final String url, final ImageView imageView) {
+
+/*    public void bindImageView(final String url, final ImageView imageView) {
         imageView.setTag(url);
         final String key = MD5Util.hashKey(url);
 
@@ -109,16 +115,21 @@ public class ImageLoader {
         final ImageRequest request = new ImageRequest(null, urlStr, maxWidth, maxHeight, listener);
         listener.onResonse(null);
 
-        final String key = MD5Util.hashKey(urlStr);
+        final String key = getCacheKey(urlStr, maxWidth, maxHeight);
         Runnable task = new Runnable() {
             @Override
             public void run() {
                 Bitmap bitmap = mCache.get(key);
                 if (bitmap == null) {
-                    HttpResponse response = downloadBitmapFromNet(request);
-                    bitmap = request.parseResponse(response);
-                    if (bitmap != null) {
-                        mCache.put(key, bitmap);
+                    HttpResponse response = null;
+                    try {
+                        response = mNetwork.peformRequest(request);
+                        bitmap = request.parseResponse(response);
+                        if (bitmap != null) {
+                            mCache.put(key, bitmap);
+                        }
+                    } catch (IOException e) {
+                        Log.e(TAG, "network is error");
                     }
                 }
                 request.bitmap = bitmap;
@@ -130,50 +141,37 @@ public class ImageLoader {
         mThreadPool.execute(task);
     }
 
-    /**
-     * 从网络下载图片
-     *
-     * @param imageRequest
-     * @return
-     */
-    private HttpResponse downloadBitmapFromNet(ImageRequest imageRequest) {
-        HttpResponse response = null;
-        try {
-            URL url = new URL(imageRequest.url);
-            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-            response = new HttpResponse(conn.getInputStream(), conn.getContentLength());
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return response;
+
+    private static String getCacheKey(String url, int maxWidth, int maxHeight) {
+        StringBuilder builder = new StringBuilder().append("#W").append(maxWidth)
+                .append("#H").append(maxHeight).append("#URL").append(url);
+        return MD5Util.hashKey(builder.toString());
     }
 
 
-    private class ImageRequest {
-        String url;
+    private class ImageRequest extends Request<Bitmap> {
         Bitmap bitmap;
         ImageListener listener;
         int maxWidth;
         int maxHeight;
 
         public ImageRequest(Bitmap bitmap, String url, int maxWidth, int maxHeight, ImageListener listener) {
+            super(url);
             this.bitmap = bitmap;
-            this.url = url;
             this.maxWidth = maxWidth;
             this.maxHeight = maxHeight;
             this.listener = listener;
         }
 
+        @Override
         public Bitmap parseResponse(HttpResponse response) {
             Bitmap bitmap = null;
-            InputStream is = response.is;
+            InputStream is = response.getInputStream();
             if (maxWidth == 0 && maxHeight == 0) {
                 bitmap = BitmapFactory.decodeStream(is);
             } else {
                 try {
-                    bitmap = mImageResizer.decodeBitmapFromStream(response.is, maxWidth, maxHeight);
+                    bitmap = mImageResizer.decodeBitmapFromStream(is, maxWidth, maxHeight);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -183,15 +181,6 @@ public class ImageLoader {
         }
     }
 
-    private class HttpResponse {
-        InputStream is;
-        int contentLength;
-
-        public HttpResponse(InputStream is, int contentLength) {
-            this.is = is;
-            this.contentLength = contentLength;
-        }
-    }
 
     private class ImageHandler extends Handler {
 

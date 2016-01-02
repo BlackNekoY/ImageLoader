@@ -1,6 +1,7 @@
 package com.rdc.imageloader.ui;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -49,7 +50,7 @@ public class ImageAdapter extends BaseAdapter {
 
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
-        ViewHolder holder;
+        final ViewHolder holder;
         if (convertView == null) {
             convertView = LayoutInflater.from(mContext).inflate(R.layout.grid_item, null, false);
             holder = new ViewHolder();
@@ -62,8 +63,18 @@ public class ImageAdapter extends BaseAdapter {
             holder.imageView.setImageResource(R.drawable.ic_refresh_blue_a400_18dp);
         }
 
-        if(mIsGridViewIdle) {
-            mImageLoader.bindImageView(mUrlList.get(position), holder.imageView);
+        if (mIsGridViewIdle) {
+//            mImageLoader.bindImageView(mUrlList.get(position), holder.imageView);
+            mImageLoader.loadBitmap(mUrlList.get(position), holder.imageView.getWidth(), holder.imageView.getHeight(), new ImageLoader.ImageListener() {
+                @Override
+                public void onResonse(Bitmap bitmap) {
+                    if (bitmap != null) {
+                        holder.imageView.setImageBitmap(bitmap);
+                    } else {
+                        holder.imageView.setImageResource(R.drawable.ic_refresh_blue_a400_18dp);
+                    }
+                }
+            });
         }
         return convertView;
     }

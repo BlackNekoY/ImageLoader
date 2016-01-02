@@ -1,13 +1,14 @@
 package com.rdc.imageloader.util;
 
+import java.io.ByteArrayOutputStream;
 import java.io.FileDescriptor;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.util.Log;
 
 /**
  * 图片压缩工具类
@@ -59,6 +60,21 @@ public class ImageResizer {
         return BitmapFactory.decodeFileDescriptor(fd, null, options);
     }
 
+    public Bitmap decodeBitmapFromBytes(byte[] bytes, int reqWidth, int reqHeight) {
+        BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inJustDecodeBounds = true;
+        BitmapFactory.decodeByteArray(bytes, 0, bytes.length, options);
+        options.inSampleSize = calcuteInSampleSize(options, reqWidth, reqHeight);
+        options.inJustDecodeBounds = false;
+        return BitmapFactory.decodeByteArray(bytes, 0, bytes.length, options);
+    }
+
+    public Bitmap decodeBitmapFromStream(InputStream is,int reqWidth,int reqHeight) throws Exception {
+        byte[] data = streamToBytes(is);
+        return decodeBitmapFromBytes(data,reqWidth,reqHeight);
+    }
+
+
     /**
      * 根据需要计算出图片的inSampleSize
      *
@@ -67,7 +83,7 @@ public class ImageResizer {
      * @param reqHeight Bitmap所要展示的高度
      * @return
      */
-    public int calcuteInSampleSize(BitmapFactory.Options options, int reqWidth, int reqHeight) {
+    private int calcuteInSampleSize(BitmapFactory.Options options, int reqWidth, int reqHeight) {
         if (reqWidth == 0 || reqHeight == 0) {
             return 1;
         }
@@ -85,5 +101,17 @@ public class ImageResizer {
             }
         }
         return inSampleSize;
+    }
+
+    private byte[] streamToBytes(InputStream inStream) throws Exception{
+        ByteArrayOutputStream outStream = new ByteArrayOutputStream();
+        byte[] buffer = new byte[1024];
+        int len = 0;
+        while( (len=inStream.read(buffer)) != -1){
+            outStream.write(buffer, 0, len);
+        }
+        outStream.close();
+        inStream.close();
+        return outStream.toByteArray();
     }
 }

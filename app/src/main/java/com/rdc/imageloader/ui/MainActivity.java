@@ -14,6 +14,7 @@ import android.widget.GridView;
 import android.widget.ImageView;
 
 import com.rdc.imageloader.R;
+import com.rdc.imageloader.net.ImageLoader;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,6 +32,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
 
 
         mUrlList = new ArrayList<>();
@@ -96,6 +98,7 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });*/
+
     }
 
 }

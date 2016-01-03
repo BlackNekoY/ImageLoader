@@ -8,7 +8,6 @@ import android.widget.BaseAdapter;
 import android.widget.ImageView;
 
 import com.rdc.imageloader.R;
-import com.rdc.imageloader.cache.MemoryCache;
 import com.rdc.imageloader.config.DisplayConfig;
 import com.rdc.imageloader.core.ImageLoader;
 import com.rdc.imageloader.config.ImageLoaderConfig;
@@ -22,7 +21,6 @@ public class ImageAdapter extends BaseAdapter {
 
     private List<String> mUrlList;
     private Context mContext;
-    private ImageLoader mImageLoader;
     private boolean mIsGridViewIdle = false;
 
     public ImageAdapter(Context mContext, List<String> mUrlList) {
@@ -30,10 +28,10 @@ public class ImageAdapter extends BaseAdapter {
         this.mUrlList = mUrlList;
 
         DisplayConfig displayConfig = new DisplayConfig()
-                .setLoadingImage(R.drawable.ic_refresh_blue_a400_18dp)
-                .setNotFoundImage(R.drawable.ic_refresh_blue_a400_18dp);
+                .setImageLoading(R.drawable.ic_file_download_blue_500_48dp)
+                .setImageFail(R.drawable.ic_error_blue_500_48dp)
+                .setImageEmpty(R.drawable.ic_error_blue_500_48dp);
         ImageLoaderConfig imageLoaderConfig = new ImageLoaderConfig()
-                .setCache(new MemoryCache())
                 .setThreadCount(5)
                 .setDisplayConfig(displayConfig);
         ImageLoader.getInstance(mContext.getApplicationContext()).init(imageLoaderConfig);
@@ -73,12 +71,26 @@ public class ImageAdapter extends BaseAdapter {
             holder.imageView.setImageResource(R.drawable.ic_refresh_blue_a400_18dp);
         }
 
-        String urlStr = mUrlList.get(position);
-        int maxWidth = holder.imageView.getWidth();
-        int maxHeight = holder.imageView.getHeight();
+        final String urlStr = mUrlList.get(position);
         holder.imageView.setTag(urlStr);
         if (mIsGridViewIdle) {
-            ImageLoader.getInstance(mContext).displayImage(holder.imageView,mUrlList.get(position));
+            /*ImageLoader.getInstance(mContext).displayImage(holder.imageView, mUrlList.get(position), new ImageLoader.ImageListener() {
+                @Override
+                public void onComplete(ImageView imageView, Bitmap bitmap) {
+                    String tag = (String) imageView.getTag();
+                    if(tag.equals(urlStr)) {
+                        imageView.setImageBitmap(bitmap);
+                    }else {
+                        imageView.setImageResource(R.drawable.ic_refresh_blue_a400_18dp);
+                    }
+                }
+
+                @Override
+                public void onError(ImageView imageView) {
+                    imageView.setImageResource(R.drawable.ic_error_blue_500_48dp);
+                }
+            });*/
+            ImageLoader.getInstance(mContext).displayImage(holder.imageView, mUrlList.get(position));
         }
         return convertView;
     }

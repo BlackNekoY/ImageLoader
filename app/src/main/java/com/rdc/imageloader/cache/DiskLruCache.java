@@ -55,21 +55,21 @@ import java.util.concurrent.TimeUnit;
  * https://android.googlesource.com/platform/libcore/+/android-4.1.1_r1/luni/src/main/java/libcore/io/DiskLruCache.java
  ******************************************************************************
  *
- * A cache that uses a bounded amount of space on a filesystem. Each cache
+ * A memoryCache that uses a bounded amount of space on a filesystem. Each memoryCache
  * entry has a string key and a fixed number of values. Values are byte
  * sequences, accessible as streams or files. Each value must be between {@code
  * 0} and {@code Integer.MAX_VALUE} bytes in length.
  *
- * <p>The cache stores its data in a directory on the filesystem. This
- * directory must be exclusive to the cache; the cache may delete or overwrite
+ * <p>The memoryCache stores its data in a directory on the filesystem. This
+ * directory must be exclusive to the memoryCache; the memoryCache may delete or overwrite
  * files from its directory. It is an error for multiple processes to use the
- * same cache directory at the same time.
+ * same memoryCache directory at the same time.
  *
- * <p>This cache limits the number of bytes that it will store on the
- * filesystem. When the number of stored bytes exceeds the limit, the cache will
+ * <p>This memoryCache limits the number of bytes that it will store on the
+ * filesystem. When the number of stored bytes exceeds the limit, the memoryCache will
  * remove entries in the background until the limit is satisfied. The limit is
- * not strict: the cache may temporarily exceed it while waiting for files to be
- * deleted. The limit does not include filesystem overhead or the cache
+ * not strict: the memoryCache may temporarily exceed it while waiting for files to be
+ * deleted. The limit does not include filesystem overhead or the memoryCache
  * journal so space-sensitive applications should set a conservative limit.
  *
  * <p>Clients call {@link #edit} to create or update the values of an entry. An
@@ -92,8 +92,8 @@ import java.util.concurrent.TimeUnit;
  * removals after the call do not impact ongoing reads.
  *
  * <p>This class is tolerant of some I/O errors. If files are missing from the
- * filesystem, the corresponding entries will be dropped from the cache. If
- * an error occurs while writing a cache value, the edit will fail silently.
+ * filesystem, the corresponding entries will be dropped from the memoryCache. If
+ * an error occurs while writing a memoryCache value, the edit will fail silently.
  * Callers should handle other problems by catching {@code IOException} and
  * responding appropriately.
  */
@@ -112,7 +112,7 @@ public final class DiskLruCache implements Closeable {
     private static final int IO_BUFFER_SIZE = 8 * 1024;
 
     /*
-     * This cache uses a journal file named "journal". A typical journal file
+     * This memoryCache uses a journal file named "journal". A typical journal file
      * looks like this:
      *     libcore.io.DiskLruCache
      *     1
@@ -129,26 +129,26 @@ public final class DiskLruCache implements Closeable {
      *     READ 3400330d1dfc7f3f7f4b8d4d803dfcf6
      *
      * The first five lines of the journal form its header. They are the
-     * constant string "libcore.io.DiskLruCache", the disk cache's version,
+     * constant string "libcore.io.DiskLruCache", the disk memoryCache's version,
      * the application's version, the value count, and a blank line.
      *
      * Each of the subsequent lines in the file is a record of the state of a
-     * cache entry. Each line contains space-separated values: a state, a key,
+     * memoryCache entry. Each line contains space-separated values: a state, a key,
      * and optional state-specific values.
      *   o DIRTY lines track that an entry is actively being created or updated.
      *     Every successful DIRTY action should be followed by a CLEAN or REMOVE
      *     action. DIRTY lines without a matching CLEAN or REMOVE indicate that
      *     temporary files may need to be deleted.
-     *   o CLEAN lines track a cache entry that has been successfully published
+     *   o CLEAN lines track a memoryCache entry that has been successfully published
      *     and may be read. A publish line is followed by the lengths of each of
      *     its values.
      *   o READ lines track accesses for LRU.
      *   o REMOVE lines track entries that have been deleted.
      *
-     * The journal file is appended to as cache operations occur. The journal may
+     * The journal file is appended to as memoryCache operations occur. The journal may
      * occasionally be compacted by dropping redundant lines. A temporary file named
      * "journal.tmp" will be used during compaction; that file should be deleted if
-     * it exists when the cache is opened.
+     * it exists when the memoryCache is opened.
      */
 
     private final File directory;
@@ -266,7 +266,7 @@ public final class DiskLruCache implements Closeable {
         }
     }
 
-    /** This cache uses a single background thread to evict entries. */
+    /** This memoryCache uses a single background thread to evict entries. */
     private final ExecutorService executorService = new ThreadPoolExecutor(0, 1,
             60L, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>());
     private final Callable<Void> cleanupCallable = new Callable<Void>() {
@@ -295,14 +295,14 @@ public final class DiskLruCache implements Closeable {
     }
 
     /**
-     * Opens the cache in {@code directory}, creating a cache if none exists
+     * Opens the memoryCache in {@code directory}, creating a memoryCache if none exists
      * there.
      *
      * @param directory a writable directory
      * @param appVersion
-     * @param valueCount the number of values per cache entry. Must be positive.
-     * @param maxSize the maximum number of bytes this cache should use to store
-     * @throws IOException if reading or writing the cache directory fails
+     * @param valueCount the number of values per memoryCache entry. Must be positive.
+     * @param maxSize the maximum number of bytes this memoryCache should use to store
+     * @throws IOException if reading or writing the memoryCache directory fails
      */
     public static DiskLruCache open(File directory, int appVersion, int valueCount, long maxSize)
             throws IOException {
@@ -329,7 +329,7 @@ public final class DiskLruCache implements Closeable {
             }
         }
 
-        // create a new empty cache
+        // create a new empty memoryCache
         directory.mkdirs();
         cache = new DiskLruCache(directory, appVersion, valueCount, maxSize);
         cache.rebuildJournal();
@@ -398,7 +398,7 @@ public final class DiskLruCache implements Closeable {
 
     /**
      * Computes the initial size and collects garbage as a part of opening the
-     * cache. Dirty entries are assumed to be inconsistent and will be deleted.
+     * memoryCache. Dirty entries are assumed to be inconsistent and will be deleted.
      */
     private void processJournal() throws IOException {
         deleteIfExists(journalFileTmp);
@@ -454,7 +454,7 @@ public final class DiskLruCache implements Closeable {
 
     private static void deleteIfExists(File file) throws IOException {
 //        try {
-//            Libcore.os.remove(file.getPath());
+//            Libcore.os.remove(file.getUri());
 //        } catch (ErrnoException errnoException) {
 //            if (errnoException.errno != OsConstants.ENOENT) {
 //                throw errnoException.rethrowAsIOException();
@@ -539,14 +539,14 @@ public final class DiskLruCache implements Closeable {
     }
 
     /**
-     * Returns the directory where this cache stores its data.
+     * Returns the directory where this memoryCache stores its data.
      */
     public File getDirectory() {
         return directory;
     }
 
     /**
-     * Returns the maximum number of bytes that this cache should use to store
+     * Returns the maximum number of bytes that this memoryCache should use to store
      * its data.
      */
     public long maxSize() {
@@ -555,7 +555,7 @@ public final class DiskLruCache implements Closeable {
 
     /**
      * Returns the number of bytes currently being used to store the values in
-     * this cache. This may be greater than the max size if a background
+     * this memoryCache. This may be greater than the max size if a background
      * deletion is pending.
      */
     public synchronized long size() {
@@ -657,7 +657,7 @@ public final class DiskLruCache implements Closeable {
     }
 
     /**
-     * Returns true if this cache has been closed.
+     * Returns true if this memoryCache has been closed.
      */
     public boolean isClosed() {
         return journalWriter == null;
@@ -665,7 +665,7 @@ public final class DiskLruCache implements Closeable {
 
     private void checkNotClosed() {
         if (journalWriter == null) {
-            throw new IllegalStateException("cache is closed");
+            throw new IllegalStateException("memoryCache is closed");
         }
     }
 
@@ -679,7 +679,7 @@ public final class DiskLruCache implements Closeable {
     }
 
     /**
-     * Closes this cache. Stored values will remain on the filesystem.
+     * Closes this memoryCache. Stored values will remain on the filesystem.
      */
     public synchronized void close() throws IOException {
         if (journalWriter == null) {
@@ -704,9 +704,9 @@ public final class DiskLruCache implements Closeable {
     }
 
     /**
-     * Closes the cache and deletes all of its stored values. This will delete
-     * all files in the cache directory including files that weren't created by
-     * the cache.
+     * Closes the memoryCache and deletes all of its stored values. This will delete
+     * all files in the memoryCache directory including files that weren't created by
+     * the memoryCache.
      */
     public void delete() throws IOException {
         close();

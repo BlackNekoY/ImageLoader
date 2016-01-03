@@ -17,13 +17,6 @@ import android.graphics.BitmapFactory;
  */
 public class ImageResizer {
 
-    private Context mContext;
-    private static final String TAG = "ImageResizer";
-
-    public ImageResizer(Context context) {
-        this.mContext = context;
-    }
-
     /**
      * 从资源加载Bitmap
      *
@@ -32,13 +25,13 @@ public class ImageResizer {
      * @param reqHeight
      * @return
      */
-    public Bitmap decodeBitmapFromResource(int resId, int reqWidth, int reqHeight) {
+    public static Bitmap decodeBitmapFromResource(Context context,int resId, int reqWidth, int reqHeight) {
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inJustDecodeBounds = true;
-        BitmapFactory.decodeResource(mContext.getResources(), resId, options);
+        BitmapFactory.decodeResource(context.getResources(), resId, options);
         options.inSampleSize = calcuteInSampleSize(options, reqWidth, reqHeight);
         options.inJustDecodeBounds = false;
-        return BitmapFactory.decodeResource(mContext.getResources(), resId, options);
+        return BitmapFactory.decodeResource(context.getResources(), resId, options);
     }
 
     /**
@@ -51,7 +44,7 @@ public class ImageResizer {
      * @throws FileNotFoundException
      * @throws IOException
      */
-    public Bitmap decodeBitmapFromFileDescriptor(FileDescriptor fd, int reqWidth, int reqHeight) throws FileNotFoundException, IOException {
+    public static Bitmap decodeBitmapFromFileDescriptor(FileDescriptor fd, int reqWidth, int reqHeight) throws FileNotFoundException, IOException {
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inJustDecodeBounds = true;
         BitmapFactory.decodeFileDescriptor(fd, null, options);
@@ -60,7 +53,7 @@ public class ImageResizer {
         return BitmapFactory.decodeFileDescriptor(fd, null, options);
     }
 
-    public Bitmap decodeBitmapFromBytes(byte[] bytes, int reqWidth, int reqHeight) {
+    public static Bitmap decodeBitmapFromBytes(byte[] bytes, int reqWidth, int reqHeight) {
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inJustDecodeBounds = true;
         BitmapFactory.decodeByteArray(bytes, 0, bytes.length, options);
@@ -69,7 +62,7 @@ public class ImageResizer {
         return BitmapFactory.decodeByteArray(bytes, 0, bytes.length, options);
     }
 
-    public Bitmap decodeBitmapFromStream(InputStream is,int reqWidth,int reqHeight) throws Exception {
+    public static Bitmap decodeBitmapFromStream(InputStream is,int reqWidth,int reqHeight) throws Exception {
         byte[] data = streamToBytes(is);
         return decodeBitmapFromBytes(data,reqWidth,reqHeight);
     }
@@ -83,7 +76,7 @@ public class ImageResizer {
      * @param reqHeight Bitmap所要展示的高度
      * @return
      */
-    private int calcuteInSampleSize(BitmapFactory.Options options, int reqWidth, int reqHeight) {
+    private static int calcuteInSampleSize(BitmapFactory.Options options, int reqWidth, int reqHeight) {
         if (reqWidth == 0 || reqHeight == 0) {
             return 1;
         }
@@ -103,7 +96,7 @@ public class ImageResizer {
         return inSampleSize;
     }
 
-    private byte[] streamToBytes(InputStream inStream) throws Exception{
+    private static byte[] streamToBytes(InputStream inStream) throws Exception{
         ByteArrayOutputStream outStream = new ByteArrayOutputStream();
         byte[] buffer = new byte[1024];
         int len = 0;

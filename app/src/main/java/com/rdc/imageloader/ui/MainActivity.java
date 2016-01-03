@@ -1,13 +1,14 @@
 package com.rdc.imageloader.ui;
 
+import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.widget.GridView;
 import android.widget.ImageView;
 
-import com.android.volley.Network;
-import com.android.volley.toolbox.ImageLoader;
 import com.rdc.imageloader.R;
+import com.rdc.imageloader.blackwhite.ImageLoader;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,7 +26,6 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
 
 
         mUrlList = new ArrayList<>();
@@ -76,7 +76,8 @@ public class MainActivity extends AppCompatActivity {
         mGridView.setAdapter(adapter);
 
 
-      /*  mGridView.setOnScrollListener(new AbsListView.OnScrollListener() {
+/*
+        mGridView.setOnScrollListener(new AbsListView.OnScrollListener() {
             @Override
             public void onScrollStateChanged(AbsListView view, int scrollState) {
                 if (scrollState == AbsListView.OnScrollListener.SCROLL_STATE_IDLE) {
@@ -93,6 +94,14 @@ public class MainActivity extends AppCompatActivity {
             }
         });*/
 
+
+      /*  ImageLoader l = new ImageLoader(this);
+        l.loadBitmap(mUrlList.get(0), 100, 100, new ImageLoader.ImageListener() {
+            @Override
+            public void onResonse(ImageLoader.ImageContainer imageContainer) {
+                Bitmap bitmap = imageContainer.getBitmap();
+            }
+        });*/
     }
 
 }

@@ -2,30 +2,23 @@ package com.rdc.imageloader.blackwhite;
 
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.util.Log;
-import android.widget.ImageView;
 
+import com.rdc.imageloader.blackwhite.cache.DiskCache;
+import com.rdc.imageloader.blackwhite.cache.MemoryCache;
 import com.rdc.imageloader.blackwhite.cache.base.ImageCache;
-import com.rdc.imageloader.blackwhite.cache.DoubleCache;
 import com.rdc.imageloader.blackwhite.network.BasicNetwork;
 import com.rdc.imageloader.blackwhite.network.Network;
-import com.rdc.imageloader.blackwhite.request.Request;
-import com.rdc.imageloader.blackwhite.response.HttpResponse;
-import com.rdc.imageloader.util.ImageResizer;
+import com.rdc.imageloader.blackwhite.request.ImageRequest;
 import com.rdc.imageloader.util.MD5Util;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.concurrent.Executor;
-import java.util.concurrent.LinkedBlockingDeque;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Created by blackwhite on 15-12-31.
@@ -33,112 +26,86 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class ImageLoader {
 
     private static final String TAG = "ImageLoader";
-    //CPU数目
-    private static final int CPU_COUNT = Runtime.getRuntime().availableProcessors();
-    //核心线程数目
-    private static final int CORE_POOL_SIZE = CPU_COUNT + 1;
-    //最大线程数目
-    private static final int MAXIMUM_POOL_SIZE = CPU_COUNT * 2 + 1;
-    //保活
-    private static final int KEEP_ALIVE = 1;
 
     private ImageCache mCache;
-    private ThreadFactory mThreadFactory;
-    private Executor mThreadPool;
     private ImageHandler mHandler;
-    private Network mNetwork;
+    private RequestQueue mQueue;
 
-    private ImageResizer mImageResizer;
-
+    private Map<String, BatchedImageRequest> mBatchedImagequests;
 
     public ImageLoader(Context context, ImageCache cache, Network network) {
-        initImageLoader();
         mCache = cache;
-        mNetwork = network;
+        mBatchedImagequests = new HashMap<String, BatchedImageRequest>();
+        mQueue = new RequestQueue(network, new DiskCache(context), 1);
+        mQueue.start();
         mHandler = new ImageHandler(Looper.getMainLooper());
-        mImageResizer = new ImageResizer(context);
+
     }
 
 
     public ImageLoader(Context context) {
-        this(context, new DoubleCache(context), new BasicNetwork());
+        this(context, new MemoryCache(context), new BasicNetwork());
     }
-
-    public interface ImageListener {
-        public void onResonse(Bitmap bitmap);
-    }
-
-
-    private void initImageLoader() {
-        mThreadFactory = new ThreadFactory() {
-            private final AtomicInteger mCount = new AtomicInteger(1);
-
-            public Thread newThread(Runnable r) {
-                return new Thread(r, "ImageLoader #" + mCount.getAndIncrement());
-            }
-        };
-
-        mThreadPool = new ThreadPoolExecutor(CORE_POOL_SIZE, MAXIMUM_POOL_SIZE, KEEP_ALIVE,
-                TimeUnit.SECONDS, new LinkedBlockingDeque<Runnable>(), mThreadFactory);
-    }
-
-/*    public void bindImageView(final String url, final ImageView imageView) {
-        imageView.setTag(url);
-        final String key = MD5Util.hashKey(url);
-
-        final Runnable r = new Runnable() {
-            @Override
-            public void run() {
-                Bitmap bitmap = mCache.get(key);
-                if (bitmap == null) {
-                    bitmap = loadBitmap(url);
-                }
-                if (bitmap != null) {
-                    ImageResult result = new ImageResult();
-                    result.bitmap = bitmap;
-                    result.url = url;
-                    result.imageView = imageView;
-                    Message msg = Message.obtain();
-                    msg.obj = result;
-                    mHandler.sendMessage(msg);
-                }
-            }
-        };
-        mThreadPool.execute(r);
-    }*/
 
     public void loadBitmap(final String urlStr, final ImageListener listener) {
         loadBitmap(urlStr, 0, 0, listener);
     }
 
-    public void loadBitmap(final String urlStr, int maxWidth, int maxHeight, final ImageListener listener) {
-        final ImageRequest request = new ImageRequest(null, urlStr, maxWidth, maxHeight, listener);
-        listener.onResonse(null);
+    public void loadBitmap(String urlStr, int maxWidth, int maxHeight, ImageListener listener) {
+        String cacheKey = getCacheKey(urlStr, maxWidth, maxHeight);
 
-        final String key = getCacheKey(urlStr, maxWidth, maxHeight);
-        Runnable task = new Runnable() {
+        Bitmap bitmap = mCache.get(cacheKey);
+        if (bitmap != null) {
+            ImageContainer container = new ImageContainer(urlStr, bitmap, listener);
+            listener.onResonse(container);
+            return;
+        }
+
+        ImageContainer container = new ImageContainer(urlStr, null, listener);
+        listener.onResonse(container);
+
+        BatchedImageRequest batchedImageRequest = mBatchedImagequests.get(cacheKey);
+        if (batchedImageRequest != null) {
+            batchedImageRequest.add(container);
+            return;
+        }
+
+        ImageRequest request = new ImageRequest(urlStr, maxWidth, maxHeight, cacheKey, makeImageRequestListener(cacheKey));
+        batchedImageRequest = new BatchedImageRequest(request, container);
+        mBatchedImagequests.put(cacheKey, batchedImageRequest);
+        mQueue.add(request);
+    }
+
+    private ImageRequest.ImageRequestListener makeImageRequestListener(final String cacheKey) {
+        return new ImageRequest.ImageRequestListener() {
             @Override
-            public void run() {
-                Bitmap bitmap = mCache.get(key);
-                if (bitmap == null) {
-                    HttpResponse response = null;
-                    try {
-                        response = mNetwork.peformRequest(request);
-                        bitmap = request.parseResponse(response);
-                        if (bitmap != null) {
-                            mCache.put(key, bitmap);
-                        }
-                    } catch (IOException e) {
-                        Log.e(TAG, "network is error");
-                    }
-                }
-                request.bitmap = bitmap;
-                Message msg = Message.obtain();
-                msg.obj = request;
-                mHandler.sendMessage(msg);
+            public void onResponse(Bitmap bitmap) {
+                getImageSuccess(cacheKey, bitmap);
+            }
+
+            @Override
+            public void onError() {
+                getImageFail(cacheKey);
             }
         };
-        mThreadPool.execute(task);
+    }
+
+    private void getImageFail(String cacheKey) {
+        BatchedImageRequest batchedImageRequest = mBatchedImagequests.remove(cacheKey);
+        batchedImageRequest.isError = false;
+        Message msg = Message.obtain();
+        msg.obj = batchedImageRequest;
+        mHandler.sendMessage(msg);
+    }
+
+    private void getImageSuccess(String cacheKey, Bitmap bitmap) {
+        mCache.put(cacheKey, bitmap);
+        BatchedImageRequest batchedImageRequest = mBatchedImagequests.remove(cacheKey);
+        batchedImageRequest.bitmap = bitmap;
+        batchedImageRequest.isError = false;
+        Message msg = Message.obtain();
+        msg.obj = batchedImageRequest;
+        mHandler.sendMessage(msg);
     }
 
 
@@ -149,38 +116,42 @@ public class ImageLoader {
     }
 
 
-    private class ImageRequest extends Request<Bitmap> {
+    class BatchedImageRequest {
+        ImageRequest request;
         Bitmap bitmap;
-        ImageListener listener;
-        int maxWidth;
-        int maxHeight;
+        List<ImageContainer> imageContainers;
+        boolean isError;
 
-        public ImageRequest(Bitmap bitmap, String url, int maxWidth, int maxHeight, ImageListener listener) {
-            super(url);
-            this.bitmap = bitmap;
-            this.maxWidth = maxWidth;
-            this.maxHeight = maxHeight;
-            this.listener = listener;
+        BatchedImageRequest(ImageRequest request, ImageContainer imageContainer) {
+            this.request = request;
+            imageContainers = new ArrayList<>();
+            imageContainers.add(imageContainer);
         }
 
-        @Override
-        public Bitmap parseResponse(HttpResponse response) {
-            Bitmap bitmap = null;
-            InputStream is = response.getInputStream();
-            if (maxWidth == 0 && maxHeight == 0) {
-                bitmap = BitmapFactory.decodeStream(is);
-            } else {
-                try {
-                    bitmap = mImageResizer.decodeBitmapFromStream(is, maxWidth, maxHeight);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-            this.bitmap = bitmap;
-            return bitmap;
+        public void add(ImageContainer imageContainer) {
+            imageContainers.add(imageContainer);
         }
     }
 
+    public class ImageContainer {
+        private String urlStr;
+        private Bitmap bitmap;
+        private ImageListener listener;
+
+        public ImageContainer(String urlStr, Bitmap bitmap, ImageListener listener) {
+            this.urlStr = urlStr;
+            this.bitmap = bitmap;
+            this.listener = listener;
+        }
+
+        public String getUrlStr() {
+            return urlStr;
+        }
+
+        public Bitmap getBitmap() {
+            return bitmap;
+        }
+    }
 
     private class ImageHandler extends Handler {
 
@@ -190,10 +161,19 @@ public class ImageLoader {
 
         @Override
         public void handleMessage(Message msg) {
-            ImageRequest request = (ImageRequest) msg.obj;
-            request.listener.onResonse(request.bitmap);
+            BatchedImageRequest request = (BatchedImageRequest) msg.obj;
+            batchImage(request);
         }
     }
 
+    private void batchImage(BatchedImageRequest request) {
+        for (ImageContainer cir : request.imageContainers) {
+            cir.bitmap = request.bitmap;
+            cir.listener.onResonse(cir);
+        }
+    }
 
+    public interface ImageListener {
+        public void onResonse(ImageContainer imageContainer);
+    }
 }

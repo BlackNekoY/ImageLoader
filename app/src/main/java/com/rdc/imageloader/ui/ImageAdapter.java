@@ -2,6 +2,7 @@ package com.rdc.imageloader.ui;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -49,7 +50,7 @@ public class ImageAdapter extends BaseAdapter {
     }
 
     @Override
-    public View getView(int position, View convertView, ViewGroup parent) {
+    public View getView(final int position, View convertView, ViewGroup parent) {
         final ViewHolder holder;
         if (convertView == null) {
             convertView = LayoutInflater.from(mContext).inflate(R.layout.grid_item, null, false);
@@ -63,17 +64,24 @@ public class ImageAdapter extends BaseAdapter {
             holder.imageView.setImageResource(R.drawable.ic_refresh_blue_a400_18dp);
         }
 
+        String urlStr = mUrlList.get(position);
+        int maxWidth = holder.imageView.getWidth();
+        int maxHeight = holder.imageView.getHeight();
+        holder.imageView.setTag(urlStr);
         if (mIsGridViewIdle) {
 //            mImageLoader.bindImageView(mUrlList.get(position), holder.imageView);
-            mImageLoader.loadBitmap(mUrlList.get(position), holder.imageView.getWidth(), holder.imageView.getHeight(), new ImageLoader.ImageListener() {
+            mImageLoader.loadBitmap(urlStr, maxWidth, maxHeight, new ImageLoader.ImageListener() {
                 @Override
-                public void onResonse(Bitmap bitmap) {
-                    if (bitmap != null) {
+                public void onResonse(ImageLoader.ImageContainer container) {
+                    Bitmap bitmap = container.getBitmap();
+                    String tag = (String) holder.imageView.getTag();
+                    if (bitmap != null && container.getUrlStr().equals(tag)) {
                         holder.imageView.setImageBitmap(bitmap);
                     } else {
                         holder.imageView.setImageResource(R.drawable.ic_refresh_blue_a400_18dp);
                     }
                 }
+
             });
         }
         return convertView;

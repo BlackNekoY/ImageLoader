@@ -1,14 +1,11 @@
 package com.rdc.imageloader.ui;
 
-import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.widget.GridView;
 import android.widget.ImageView;
 
 import com.rdc.imageloader.R;
-import com.rdc.imageloader.blackwhite.ImageLoader;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -74,6 +71,7 @@ public class MainActivity extends AppCompatActivity {
         adapter = new ImageAdapter(this,mUrlList);
         adapter.setGridViewScrollState(true);
         mGridView.setAdapter(adapter);
+
 
 
 /*

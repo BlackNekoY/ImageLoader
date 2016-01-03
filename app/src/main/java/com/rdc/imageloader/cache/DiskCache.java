@@ -1,4 +1,4 @@
-package com.rdc.imageloader.blackwhite.cache;
+package com.rdc.imageloader.cache;
 
 import android.content.Context;
 import android.content.pm.PackageInfo;
@@ -6,8 +6,6 @@ import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Environment;
-
-import com.rdc.imageloader.blackwhite.cache.base.ImageCache;
 
 import java.io.File;
 import java.io.IOException;
@@ -23,7 +21,7 @@ public class DiskCache implements ImageCache {
     private final int VALUE_COUNT = 1;
     //读写缓存从哪一个位置读写，默认为0
     private final int INDEX = 0;
-    //最大缓存空间大小，默认为50MB
+    //最大缓存空间大小，默认为20MB
     private final long MAX_SIZE = 20 * 1024 * 1024;
 
     private DiskLruCache mDiskLruCache;

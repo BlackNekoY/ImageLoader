@@ -1,4 +1,4 @@
-package com.rdc.imageloader.blackwhite.cache.base;
+package com.rdc.imageloader.cache;
 
 import android.graphics.Bitmap;
 

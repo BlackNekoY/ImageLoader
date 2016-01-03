@@ -1,8 +1,6 @@
 package com.rdc.imageloader.ui;
 
 import android.content.Context;
-import android.graphics.Bitmap;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -10,7 +8,10 @@ import android.widget.BaseAdapter;
 import android.widget.ImageView;
 
 import com.rdc.imageloader.R;
-import com.rdc.imageloader.blackwhite.ImageLoader;
+import com.rdc.imageloader.cache.MemoryCache;
+import com.rdc.imageloader.config.DisplayConfig;
+import com.rdc.imageloader.core.ImageLoader;
+import com.rdc.imageloader.config.ImageLoaderConfig;
 
 import java.util.List;
 
@@ -27,7 +28,15 @@ public class ImageAdapter extends BaseAdapter {
     public ImageAdapter(Context mContext, List<String> mUrlList) {
         this.mContext = mContext;
         this.mUrlList = mUrlList;
-        mImageLoader = new ImageLoader(mContext);
+
+        DisplayConfig displayConfig = new DisplayConfig()
+                .setLoadingImage(R.drawable.ic_refresh_blue_a400_18dp)
+                .setNotFoundImage(R.drawable.ic_refresh_blue_a400_18dp);
+        ImageLoaderConfig imageLoaderConfig = new ImageLoaderConfig()
+                .setCache(new MemoryCache())
+                .setThreadCount(5)
+                .setDisplayConfig(displayConfig);
+        ImageLoader.getInstance(mContext.getApplicationContext()).init(imageLoaderConfig);
     }
 
     public void setGridViewScrollState(boolean isGridViewIdle) {
@@ -69,20 +78,7 @@ public class ImageAdapter extends BaseAdapter {
         int maxHeight = holder.imageView.getHeight();
         holder.imageView.setTag(urlStr);
         if (mIsGridViewIdle) {
-//            mImageLoader.bindImageView(mUrlList.get(position), holder.imageView);
-            mImageLoader.loadBitmap(urlStr, maxWidth, maxHeight, new ImageLoader.ImageListener() {
-                @Override
-                public void onResonse(ImageLoader.ImageContainer container) {
-                    Bitmap bitmap = container.getBitmap();
-                    String tag = (String) holder.imageView.getTag();
-                    if (bitmap != null && container.getUrlStr().equals(tag)) {
-                        holder.imageView.setImageBitmap(bitmap);
-                    } else {
-                        holder.imageView.setImageResource(R.drawable.ic_refresh_blue_a400_18dp);
-                    }
-                }
-
-            });
+            ImageLoader.getInstance(mContext).displayImage(holder.imageView,mUrlList.get(position));
         }
         return convertView;
     }

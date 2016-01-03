@@ -1,10 +1,8 @@
-package com.rdc.imageloader.blackwhite.cache;
+package com.rdc.imageloader.cache;
 
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.support.v4.util.LruCache;
-
-import com.rdc.imageloader.blackwhite.cache.base.ImageCache;
 
 /**
  * Created by blackwhite on 15-12-31.
@@ -12,10 +10,8 @@ import com.rdc.imageloader.blackwhite.cache.base.ImageCache;
 public class MemoryCache implements ImageCache {
 
     private LruCache<String, Bitmap> mLruCache;
-    private Context mContext;
 
-    public MemoryCache(Context context) {
-        mContext = context;
+    public MemoryCache() {
         initCacheOptions();
     }
 

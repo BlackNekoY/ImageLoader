@@ -1,9 +1,7 @@
-package com.rdc.imageloader.blackwhite.cache;
+package com.rdc.imageloader.cache;
 
 import android.content.Context;
 import android.graphics.Bitmap;
-
-import com.rdc.imageloader.blackwhite.cache.base.ImageCache;
 
 /**
  * Created by blackwhite on 15-12-31.
@@ -14,7 +12,7 @@ public class DoubleCache implements ImageCache {
     private DiskCache mDiskCache;
 
     public DoubleCache(Context context) {
-        mMemoryCache = new MemoryCache(context);
+        mMemoryCache = new MemoryCache();
         mDiskCache = new DiskCache(context);
     }
 

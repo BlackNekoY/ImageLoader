@@ -9,8 +9,8 @@ import android.widget.ImageView;
 
 import com.rdc.imageloader.R;
 import com.rdc.imageloader.config.DisplayConfig;
-import com.rdc.imageloader.core.ImageLoader;
 import com.rdc.imageloader.config.ImageLoaderConfig;
+import com.rdc.imageloader.core.ImageLoader;
 
 import java.util.List;
 
@@ -27,14 +27,16 @@ public class ImageAdapter extends BaseAdapter {
         this.mContext = mContext;
         this.mUrlList = mUrlList;
 
-        DisplayConfig displayConfig = new DisplayConfig()
-                .setImageLoading(R.drawable.ic_file_download_blue_500_48dp)
-                .setImageFail(R.drawable.ic_error_blue_500_48dp)
-                .setImageEmpty(R.drawable.ic_error_blue_500_48dp);
-        ImageLoaderConfig imageLoaderConfig = new ImageLoaderConfig()
-                .setThreadCount(5)
-                .setDisplayConfig(displayConfig);
-        ImageLoader.getInstance(mContext.getApplicationContext()).init(imageLoaderConfig);
+        DisplayConfig displayConfig = new DisplayConfig.Builder()
+                .imageLoadingResource(R.drawable.ic_file_download_blue_500_48dp)
+                .imageFailResource(R.drawable.ic_error_blue_500_48dp)
+                .imageEmptyResource(R.drawable.ic_error_blue_500_48dp)
+                .build();
+        ImageLoaderConfig imageLoaderConfig = new ImageLoaderConfig.Builder(mContext)
+                .build();
+        imageLoaderConfig.setDisplayConfig(displayConfig);
+
+
     }
 
     public void setGridViewScrollState(boolean isGridViewIdle) {
@@ -67,12 +69,8 @@ public class ImageAdapter extends BaseAdapter {
         } else {
             holder = (ViewHolder) convertView.getTag();
         }
-        if (!getItem(position).equals(holder.imageView.getTag())) {
-            holder.imageView.setImageResource(R.drawable.ic_refresh_blue_a400_18dp);
-        }
 
         final String urlStr = mUrlList.get(position);
-        holder.imageView.setTag(urlStr);
         if (mIsGridViewIdle) {
             /*ImageLoader.getInstance(mContext).displayImage(holder.imageView, mUrlList.get(position), new ImageLoader.ImageListener() {
                 @Override
@@ -90,7 +88,7 @@ public class ImageAdapter extends BaseAdapter {
                     imageView.setImageResource(R.drawable.ic_error_blue_500_48dp);
                 }
             });*/
-            ImageLoader.getInstance(mContext).displayImage(holder.imageView, mUrlList.get(position));
+            ImageLoader.getInstance().displayImage(holder.imageView, urlStr);
         }
         return convertView;
     }

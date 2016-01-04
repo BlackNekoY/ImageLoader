@@ -1,8 +1,8 @@
 package com.rdc.imageloader.cache;
 
-import android.content.Context;
 import android.graphics.Bitmap;
 import android.support.v4.util.LruCache;
+import android.util.Log;
 
 /**
  * Created by blackwhite on 15-12-31.
@@ -11,17 +11,15 @@ public class MemoryCache implements ImageCache {
 
     private LruCache<String, Bitmap> mLruCache;
 
-    public MemoryCache() {
-        initCacheOptions();
+    public MemoryCache(long cacheSize) {
+        initCacheOptions(cacheSize);
     }
 
-    private void initCacheOptions() {
-        //可用内存（MB）
-        int maxSize = (int) Runtime.getRuntime().maxMemory() / 1024;
-        mLruCache = new LruCache<String, Bitmap>(maxSize / 4) {
+    private void initCacheOptions(long cacheSize) {
+        mLruCache = new LruCache<String, Bitmap>((int) (cacheSize)) {
             @Override
             protected int sizeOf(String key, Bitmap value) {
-                return value.getRowBytes() * value.getHeight() / 1024;
+                return value.getRowBytes() * value.getHeight();
             }
         };
     }

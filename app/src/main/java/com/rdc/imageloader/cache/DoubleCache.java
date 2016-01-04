@@ -11,9 +11,9 @@ public class DoubleCache implements ImageCache {
     private MemoryCache mMemoryCache;
     private DiskCache mDiskCache;
 
-    public DoubleCache(Context context) {
-        mMemoryCache = new MemoryCache();
-        mDiskCache = new DiskCache(context);
+    public DoubleCache(Context context,long memoryCacheSize,long diskCacheSize) {
+        mMemoryCache = new MemoryCache(memoryCacheSize);
+        mDiskCache = new DiskCache(context,diskCacheSize);
     }
 
     @Override

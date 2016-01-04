@@ -31,18 +31,18 @@ public class DiskCache implements ImageCache {
     private boolean isCacheCreated = false;
     private Context mContext;
 
-    public DiskCache(Context context) {
+    public DiskCache(Context context, long cacheSize) {
         mContext = context;
-        initCacheOptions();
+        initCacheOptions(cacheSize);
     }
 
-    private void initCacheOptions() {
+    private void initCacheOptions(long cacheSize) {
         try {
             File cacheDirectory = getCacheDir();
-            if(!cacheDirectory.exists()) {
+            if (!cacheDirectory.exists()) {
                 cacheDirectory.mkdirs();
             }
-            mDiskLruCache = DiskLruCache.open(cacheDirectory, getAppVersion(), mValueCount, mMaxSize);
+            mDiskLruCache = DiskLruCache.open(cacheDirectory, getAppVersion(), mValueCount, cacheSize);
             isCacheCreated = true;
         } catch (IOException e) {
             isCacheCreated = false;
@@ -66,11 +66,12 @@ public class DiskCache implements ImageCache {
 
     /**
      * 得到应用版本号
+     *
      * @return
      */
     private int getAppVersion() {
         try {
-            PackageInfo info = mContext.getPackageManager().getPackageInfo(mContext.getPackageName(),0);
+            PackageInfo info = mContext.getPackageManager().getPackageInfo(mContext.getPackageName(), 0);
             return info.versionCode;
         } catch (PackageManager.NameNotFoundException e) {
             e.printStackTrace();

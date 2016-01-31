@@ -1,4 +1,4 @@
-package com.rdc.imageloader.loader;
+package com.rdc.imageloader.core.loader;
 
 import android.content.Context;
 

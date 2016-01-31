@@ -8,9 +8,10 @@ import android.widget.BaseAdapter;
 import android.widget.ImageView;
 
 import com.rdc.imageloader.R;
-import com.rdc.imageloader.config.DisplayConfig;
-import com.rdc.imageloader.config.ImageLoaderConfig;
+import com.rdc.imageloader.core.config.DisplayConfig;
+import com.rdc.imageloader.core.config.ImageLoaderConfig;
 import com.rdc.imageloader.core.ImageLoader;
+import com.rdc.imageloader.core.policy.ReversePolicy;
 
 import java.util.List;
 
@@ -33,9 +34,10 @@ public class ImageAdapter extends BaseAdapter {
                 .imageEmptyResource(R.drawable.ic_error_blue_500_48dp)
                 .build();
         ImageLoaderConfig imageLoaderConfig = new ImageLoaderConfig.Builder(mContext)
+                .loadPolicy(new ReversePolicy())
+                .displayConfig(displayConfig)
                 .build();
-        imageLoaderConfig.setDisplayConfig(displayConfig);
-
+        ImageLoader.getInstance().init(imageLoaderConfig);
 
     }
 

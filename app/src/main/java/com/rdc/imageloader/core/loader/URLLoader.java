@@ -1,8 +1,8 @@
-package com.rdc.imageloader.loader;
+package com.rdc.imageloader.core.loader;
 
 import android.graphics.Bitmap;
 
-import com.rdc.imageloader.request.ImageRequest;
+import com.rdc.imageloader.core.request.ImageRequest;
 import com.rdc.imageloader.util.ImageResizer;
 
 import java.io.IOException;

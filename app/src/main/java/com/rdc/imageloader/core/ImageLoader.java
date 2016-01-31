@@ -6,9 +6,9 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.widget.ImageView;
 
-import com.rdc.imageloader.config.DisplayConfig;
-import com.rdc.imageloader.config.ImageLoaderConfig;
-import com.rdc.imageloader.request.ImageRequest;
+import com.rdc.imageloader.core.config.DisplayConfig;
+import com.rdc.imageloader.core.config.ImageLoaderConfig;
+import com.rdc.imageloader.core.request.ImageRequest;
 import com.rdc.imageloader.util.MD5Util;
 
 /**

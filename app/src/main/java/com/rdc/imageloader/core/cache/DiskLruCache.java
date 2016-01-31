@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.rdc.imageloader.cache;
+package com.rdc.imageloader.core.cache;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedWriter;

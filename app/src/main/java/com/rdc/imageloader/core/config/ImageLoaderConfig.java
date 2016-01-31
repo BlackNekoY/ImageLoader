@@ -1,12 +1,14 @@
-package com.rdc.imageloader.config;
+package com.rdc.imageloader.core.config;
 
 
 import android.content.Context;
 
-import com.rdc.imageloader.cache.DiskCache;
-import com.rdc.imageloader.cache.ImageCache;
-import com.rdc.imageloader.cache.MemoryCache;
-import com.rdc.imageloader.cache.NoCache;
+import com.rdc.imageloader.core.cache.DiskCache;
+import com.rdc.imageloader.core.cache.ImageCache;
+import com.rdc.imageloader.core.cache.MemoryCache;
+import com.rdc.imageloader.core.cache.NoCache;
+import com.rdc.imageloader.core.policy.LoadPolicy;
+import com.rdc.imageloader.core.policy.SerialPolicy;
 
 /**
  * Created by blackwhite on 16-1-3.
@@ -28,6 +30,7 @@ public class ImageLoaderConfig {
     public boolean useDiskCache;
 
     public int threadCount;
+    public LoadPolicy loadPolicy;
 
     public DisplayConfig displayConfig;
 
@@ -41,6 +44,7 @@ public class ImageLoaderConfig {
         diskCacheSize = builder.diskCacheSize;
         useDiskCache = builder.useDiskCache;
         threadCount = builder.threadCount;
+        loadPolicy = builder.loadPolicy;
         displayConfig = builder.displayConfig;
     }
 
@@ -72,10 +76,10 @@ public class ImageLoaderConfig {
                 ", diskCacheSize=" + diskCacheSize +
                 ", useDiskCache=" + useDiskCache +
                 ", threadCount=" + threadCount +
+                ", loadPolicy=" + loadPolicy +
                 ", displayConfig=" + displayConfig +
                 '}';
     }
-
 
     public static class Builder {
 
@@ -95,6 +99,8 @@ public class ImageLoaderConfig {
 
         //默认线程数为CPU数+1
         private int threadCount = DEFAULT_THREAD_COUNT;
+        //默认加载策略为顺序加载
+        private LoadPolicy loadPolicy = new SerialPolicy();
 
         private DisplayConfig displayConfig = DisplayConfig.createDefault();
 
@@ -137,6 +143,11 @@ public class ImageLoaderConfig {
             return this;
         }
 
+        public Builder loadPolicy(LoadPolicy policy) {
+            this.loadPolicy = policy;
+            return this;
+        }
+
         public Builder displayConfig(DisplayConfig displayConfig) {
             this.displayConfig = displayConfig;
             return this;
@@ -167,6 +178,9 @@ public class ImageLoaderConfig {
                 diskCache = new NoCache();
             } else if (diskCache instanceof NoCache) {
                 diskCache = new DiskCache(context, diskCacheSize);
+            }
+            if(loadPolicy == null) {
+                loadPolicy = new SerialPolicy();
             }
             if (displayConfig == null) {
                 displayConfig = DisplayConfig.createDefault();

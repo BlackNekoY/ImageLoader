@@ -1,8 +1,7 @@
-package com.rdc.imageloader.cache;
+package com.rdc.imageloader.core.cache;
 
 import android.graphics.Bitmap;
 import android.support.v4.util.LruCache;
-import android.util.Log;
 
 /**
  * Created by blackwhite on 15-12-31.

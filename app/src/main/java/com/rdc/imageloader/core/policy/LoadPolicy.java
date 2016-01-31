@@ -1,6 +1,6 @@
-package com.rdc.imageloader.policy;
+package com.rdc.imageloader.core.policy;
 
-import com.rdc.imageloader.request.ImageRequest;
+import com.rdc.imageloader.core.request.ImageRequest;
 
 /**
  * Created by blackwhite on 16-1-31.

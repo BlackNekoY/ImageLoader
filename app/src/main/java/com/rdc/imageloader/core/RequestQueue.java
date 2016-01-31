@@ -4,25 +4,28 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.util.Log;
 
-import com.rdc.imageloader.cache.ImageCache;
-import com.rdc.imageloader.loader.Loader;
-import com.rdc.imageloader.loader.LoaderManager;
-import com.rdc.imageloader.request.ImageRequest;
+import com.rdc.imageloader.core.cache.ImageCache;
+import com.rdc.imageloader.core.loader.Loader;
+import com.rdc.imageloader.core.loader.LoaderManager;
+import com.rdc.imageloader.core.request.ImageRequest;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.PriorityBlockingQueue;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Created by blackwhite on 16-1-3.
  */
 public class RequestQueue {
 
-    public static final int DEFAULT_THREAD_COUNT = 5;
+    private static final String TAG = "RequestQueue";
 
     private Context context;
     private ImageCache cache;
     private BlockingQueue<ImageRequest> mQueue = new PriorityBlockingQueue<>();
     private ImageDispatcher[] dispatchers;
+    //请求的序号生成器
+    private AtomicInteger atomicInteger = new AtomicInteger(0);
 
     public RequestQueue(Context context, int threadCount, ImageCache cache) {
         this.context = context;
@@ -77,8 +80,16 @@ public class RequestQueue {
     }
 
     public void add(ImageRequest request) {
-        mQueue.add(request);
+        if(!mQueue.contains(request)) {
+            request.setNumber(getImageRequestNumber());
+            mQueue.add(request);
+        }else {
+            Log.i(TAG,"请求队列已有该请求");
+        }
     }
 
+    private int getImageRequestNumber() {
+        return atomicInteger.incrementAndGet();
+    }
 
 }

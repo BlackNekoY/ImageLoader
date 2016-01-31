@@ -1,18 +1,19 @@
-package com.rdc.imageloader.request;
+package com.rdc.imageloader.core.request;
 
 import android.graphics.Bitmap;
 import android.os.Handler;
 import android.os.Looper;
 import android.widget.ImageView;
 
-import com.rdc.imageloader.config.DisplayConfig;
-import com.rdc.imageloader.config.ImageLoaderConfig;
+import com.rdc.imageloader.core.config.DisplayConfig;
+import com.rdc.imageloader.core.config.ImageLoaderConfig;
 import com.rdc.imageloader.core.ImageLoader;
 
 /**
  * Created by blackwhite on 16-1-3.
  */
 public class ImageRequest implements Comparable<ImageRequest> {
+    private int number;
     private ImageView imageView;
     private String uri;
     private ImageLoader.ImageListener listener;
@@ -38,6 +39,14 @@ public class ImageRequest implements Comparable<ImageRequest> {
 
     public String getCacheKey() {
         return cacheKey;
+    }
+
+    public void setNumber(int number) {
+        this.number = number;
+    }
+
+    public int getNumber() {
+        return number;
     }
 
     public void onResponse(final Bitmap bitmap) {
@@ -85,6 +94,6 @@ public class ImageRequest implements Comparable<ImageRequest> {
 
     @Override
     public int compareTo(ImageRequest another) {
-        return 1;
+        return config.loadPolicy.compare(this,another);
     }
 }

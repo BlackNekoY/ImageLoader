@@ -1,4 +1,4 @@
-package com.rdc.imageloader.config;
+package com.rdc.imageloader.core.config;
 
 import android.widget.ImageView;
 

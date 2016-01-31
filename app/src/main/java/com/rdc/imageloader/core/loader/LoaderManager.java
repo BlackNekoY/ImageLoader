@@ -2,28 +2,52 @@ package com.rdc.imageloader.core.loader;
 
 import android.content.Context;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * Created by blackwhite on 16-1-3.
  */
 public class LoaderManager {
 
-    private static LoaderManager intanse = new LoaderManager();
-    private static Context context;
+    public static final String HTTP = "http";
+    public static final String HTTPS = "https";
+    public static final String FILE = "file";
 
-    private LoaderManager() {
+    private Context context;
+    private Map<String,Loader> loaderMap = new HashMap<>();
+    private Loader nullLoader = new NullLoader();
+
+    private volatile static LoaderManager sLoaderManager;
+
+    public static LoaderManager getInstance() {
+        if(sLoaderManager == null) {
+            synchronized (LoaderManager.class) {
+                if(sLoaderManager == null) {
+                    sLoaderManager = new LoaderManager();
+                }
+            }
+        }
+        return sLoaderManager;
     }
 
-    public static LoaderManager getIntanse(Context context) {
-        LoaderManager.context = context;
-        return intanse;
+    private LoaderManager () {
+        register(HTTP,new URLLoader());
+        register(HTTPS, new URLLoader());
+        register(FILE,new LocalLoader());
     }
 
     public Loader getLoader(String schema) {
-        if ("http".equals(schema) || "https".equals(schema)) {
-            return new URLLoader();
-        } else if ("file".equals(schema)) {
-            return new LocalLoader(context);
+        if(loaderMap.containsKey(schema)) {
+            return loaderMap.get(schema);
         }
-        throw new IllegalArgumentException("图片路径错误");
+        return nullLoader;
+    }
+
+    public void register(String schema,Loader loader) {
+        if(loaderMap.containsKey(schema)) {
+            return;
+        }
+        loaderMap.put(schema,loader);
     }
 }
